@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
+import { usePosts } from '../context/PostContext';
 
-function PostForm({ onAddPost, onUpdatePost, postToEdit, onCancelEdit }) {
+function PostForm() {
+  const { addPost, updatePost, currentPost, cancelEdit } = usePosts();
+
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [platforms, setPlatforms] = useState([]);
@@ -8,32 +11,25 @@ function PostForm({ onAddPost, onUpdatePost, postToEdit, onCancelEdit }) {
   const [time, setTime] = useState('');
   const [image, setImage] = useState(null);
 
-  // --- EFFECT: Populate form when 'postToEdit' changes ---
+  // Sync form with 'currentPost' (Edit Mode)
   useEffect(() => {
-    if (postToEdit) {
-      setTitle(postToEdit.title);
-      setContent(postToEdit.content);
-      setPlatforms(postToEdit.platforms);
-      setImage(postToEdit.image);
+    if (currentPost) {
+      setTitle(currentPost.title);
+      setContent(currentPost.content);
+      setPlatforms(currentPost.platforms);
+      setImage(currentPost.image);
       
-      // Parse the date object back to input strings
-      const dateObj = new Date(postToEdit.scheduledFor);
-      setDate(dateObj.toISOString().split('T')[0]);
-      
-      // Time is tricky because of timezone offsets, simplified here:
-      const hours = dateObj.getHours().toString().padStart(2, '0');
-      const minutes = dateObj.getMinutes().toString().padStart(2, '0');
-      setTime(`${hours}:${minutes}`);
+      const d = new Date(currentPost.scheduledFor);
+      setDate(d.toISOString().split('T')[0]);
+      setTime(d.toTimeString().slice(0, 5));
     } else {
       resetForm();
     }
-  }, [postToEdit]);
+  }, [currentPost]);
 
-  // Initialize Default Date (Only if not editing)
+  // Set default date on load
   useEffect(() => {
-    if (!postToEdit) {
-      resetForm();
-    }
+    if (!currentPost) resetForm();
   }, []);
 
   const resetForm = () => {
@@ -42,50 +38,40 @@ function PostForm({ onAddPost, onUpdatePost, postToEdit, onCancelEdit }) {
     setPlatforms([]);
     setImage(null);
     
-    const today = new Date();
-    const nextHour = new Date(today);
-    nextHour.setHours(nextHour.getHours() + 1);
+    const now = new Date();
+    const nextHour = new Date(now);
+    nextHour.setHours(now.getHours() + 1);
     nextHour.setMinutes(0);
     
-    setDate(today.toISOString().split('T')[0]);
+    setDate(now.toISOString().split('T')[0]);
     setTime(nextHour.toTimeString().slice(0, 5));
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-
-    if (!title.trim() || !content.trim() || platforms.length === 0) {
-      return; // Validation handled by browser 'required' or custom toast in parent
-    }
+    if (!title.trim() || !content.trim() || platforms.length === 0) return;
 
     const postData = {
-      id: postToEdit ? postToEdit.id : Date.now().toString(),
+      id: currentPost ? currentPost.id : Date.now().toString(),
       title,
       content,
       image,
       platforms,
       scheduledFor: new Date(`${date}T${time}`),
-      created: postToEdit ? postToEdit.created : new Date(),
+      created: currentPost ? currentPost.created : new Date(),
     };
 
-    if (postToEdit) {
-      onUpdatePost(postData);
-    } else {
-      onAddPost(postData);
-    }
-    
+    currentPost ? updatePost(postData) : addPost(postData);
     resetForm();
   };
 
-  const togglePlatform = (platformId) => {
-    setPlatforms((prev) => 
-      prev.includes(platformId) ? prev.filter(p => p !== platformId) : [...prev, platformId]
-    );
+  const togglePlatform = (id) => {
+    setPlatforms(prev => prev.includes(id) ? prev.filter(p => p !== id) : [...prev, id]);
   };
 
-  const handleImageChange = (e) => {
+  const handleImage = (e) => {
     const file = e.target.files[0];
-    if (file && file.type.match('image.*')) {
+    if (file?.type.match('image.*')) {
       const reader = new FileReader();
       reader.onload = (ev) => setImage(ev.target.result);
       reader.readAsDataURL(file);
@@ -94,85 +80,54 @@ function PostForm({ onAddPost, onUpdatePost, postToEdit, onCancelEdit }) {
 
   return (
     <div className="form-container">
-      <h2>{postToEdit ? 'Edit Post' : 'Create Post'}</h2>
-      <div className="post-form" style={postToEdit ? {border: '2px solid #3b82f6'} : {}}>
+      <h2>{currentPost ? 'Edit Post' : 'Create Post'}</h2>
+      <div className="post-form" style={currentPost ? {border: '2px solid #3b82f6'} : {}}>
         
-        <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem'}}>
-          <h3>{postToEdit ? 'Update Details' : 'Create New Post'}</h3>
-          {postToEdit && (
-            <button 
-              type="button" 
-              onClick={onCancelEdit}
-              style={{background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', textDecoration: 'underline'}}
-            >
-              Cancel Edit
+        <div style={{display: 'flex', justifyContent: 'space-between', marginBottom: '1rem'}}>
+          <h3>{currentPost ? 'Update Details' : 'Create New Post'}</h3>
+          {currentPost && (
+            <button onClick={cancelEdit} style={{background:'none', border:'none', color:'#ef4444', cursor:'pointer'}}>
+              Cancel
             </button>
           )}
         </div>
 
         <form onSubmit={handleSubmit}>
-          {/* Title */}
           <div className="form-group">
             <label htmlFor="postTitle">Title</label>
-            <input
-              type="text"
-              id="postTitle"
-              className="input-field"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              required
-            />
+            <input type="text" id="postTitle" className="input-field" value={title} onChange={(e) => setTitle(e.target.value)} required />
           </div>
 
-          {/* Content */}
           <div className="form-group">
             <label htmlFor="postContent">Content</label>
-            <textarea
-              id="postContent"
-              rows="4"
-              className="input-field"
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              required
-            ></textarea>
+            <textarea id="postContent" rows="4" className="input-field" value={content} onChange={(e) => setContent(e.target.value)} required />
           </div>
 
-          {/* Image */}
           <div className="form-group">
-            <label>Image (optional)</label>
+            <label>Image</label>
             <div className="image-upload-container">
-              <div 
-                className={`image-preview ${image ? 'has-image' : ''}`}
-                style={image ? { backgroundImage: `url(${image})` } : {}}
-              ></div>
+              <div className={`image-preview ${image ? 'has-image' : ''}`} style={image ? {backgroundImage: `url(${image})`} : {}}></div>
               <div className="upload-button-container">
-                <label htmlFor="imageUpload" className="upload-button">
-                  <i className="fas fa-cloud-upload-alt"></i> {image ? 'Change Image' : 'Upload Image'}
+                <label htmlFor="imgUp" className="upload-button">
+                  <i className="fas fa-cloud-upload-alt"></i> Upload
                 </label>
-                <input type="file" id="imageUpload" accept="image/*" onChange={handleImageChange} hidden />
+                <input type="file" id="imgUp" accept="image/*" onChange={handleImage} hidden />
               </div>
             </div>
           </div>
 
-          {/* Platforms */}
           <div className="form-group">
             <label>Platforms</label>
             <div className="platform-selector">
-              {['twitter', 'facebook', 'instagram', 'linkedin'].map((p) => (
-                <button
-                  key={p}
-                  type="button"
-                  className={`platform-button ${platforms.includes(p) ? 'selected' : ''}`}
-                  onClick={() => togglePlatform(p)}
-                >
-                  <i className={`fab fa-${p === 'twitter' ? 'twitter' : p === 'facebook' ? 'facebook-f' : p === 'linkedin' ? 'linkedin-in' : p}`}></i> 
+              {['twitter', 'facebook', 'instagram', 'linkedin'].map(p => (
+                <button key={p} type="button" className={`platform-button ${platforms.includes(p) ? 'selected' : ''}`} onClick={() => togglePlatform(p)}>
+                  <i className={`fab fa-${p === 'facebook' ? 'facebook-f' : p === 'linkedin' ? 'linkedin-in' : p}`}></i> 
                   {' ' + p.charAt(0).toUpperCase() + p.slice(1)}
                 </button>
               ))}
             </div>
           </div>
 
-          {/* Date & Time */}
           <div className="form-group">
             <label>Schedule</label>
             <div className="date-time-container">
@@ -181,9 +136,8 @@ function PostForm({ onAddPost, onUpdatePost, postToEdit, onCancelEdit }) {
             </div>
           </div>
 
-          {/* Submit Button */}
-          <button type="submit" className="schedule-button" style={postToEdit ? {backgroundColor: '#2563eb'} : {}}>
-            {postToEdit ? 'Update Post' : 'Schedule Post'}
+          <button type="submit" className="schedule-button" style={currentPost ? {backgroundColor: '#2563eb'} : {}}>
+            {currentPost ? 'Update Post' : 'Schedule Post'}
           </button>
         </form>
       </div>

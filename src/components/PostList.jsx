@@ -1,10 +1,13 @@
 import React from 'react';
+import { usePosts } from '../context/PostContext';
 
-function PostList({ posts, onDeletePost, onEditPost }) {
-  
-  const formatDate = (dateString) => {
-    const options = { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' };
-    return new Date(dateString).toLocaleDateString('en-US', options);
+function PostList() {
+  const { posts, deletePost, editPost } = usePosts();
+
+  const formatDate = (str) => {
+    return new Date(str).toLocaleDateString('en-US', { 
+      year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' 
+    });
   };
 
   const sortedPosts = [...posts].sort((a, b) => new Date(a.scheduledFor) - new Date(b.scheduledFor));
@@ -13,7 +16,7 @@ function PostList({ posts, onDeletePost, onEditPost }) {
     <div className="posts-container">
       <h2>Scheduled Posts</h2>
       <div className="posts-list-container">
-        <div id="postsList" className="posts-list">
+        <div className="posts-list">
           
           {sortedPosts.length === 0 ? (
              <div className="empty-posts-message" style={{ display: 'block' }}>
@@ -34,32 +37,20 @@ function PostList({ posts, onDeletePost, onEditPost }) {
                 )}
 
                 <div className="post-platforms">
-                  {post.platforms.map((platform) => (
-                    <span key={platform} className="platform-tag">
-                       {/* Icon logic simplified for brevity, assumes you have FontAwesome loaded */}
-                      <i className={`fab fa-${platform === 'twitter' ? 'twitter' : platform === 'facebook' ? 'facebook-f' : platform === 'linkedin' ? 'linkedin-in' : platform}`}></i>
-                      {' ' + platform.charAt(0).toUpperCase() + platform.slice(1)}
+                  {post.platforms.map(p => (
+                    <span key={p} className="platform-tag">
+                      <i className={`fab fa-${p === 'facebook' ? 'facebook-f' : p === 'linkedin' ? 'linkedin-in' : p}`}></i>
+                      {' ' + p.charAt(0).toUpperCase() + p.slice(1)}
                     </span>
                   ))}
                 </div>
 
                 <div className="post-actions">
-                  {/* EDIT BUTTON */}
-                  <button 
-                    className="delete-post-button" 
-                    style={{ color: '#3b82f6', marginRight: '8px' }}
-                    onClick={() => onEditPost(post)}
-                    title="Edit post"
-                  >
+                  <button className="delete-post-button" style={{color: '#3b82f6', marginRight: '8px'}} onClick={() => editPost(post)}>
                     <i className="fas fa-edit"></i>
                   </button>
 
-                  {/* DELETE BUTTON */}
-                  <button 
-                    className="delete-post-button" 
-                    onClick={() => onDeletePost(post.id)}
-                    title="Delete post"
-                  >
+                  <button className="delete-post-button" onClick={() => deletePost(post.id)}>
                     <i className="fas fa-trash-alt"></i>
                   </button>
                 </div>
