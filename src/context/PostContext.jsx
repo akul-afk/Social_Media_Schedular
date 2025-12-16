@@ -6,19 +6,14 @@ const PostContext = createContext();
 export function PostProvider({ children }) {
   const [posts, setPosts] = useLocalStorage("scheduledPosts", []);
   
- 
-  const [modal, setModal] = useState({ type: null, data: null });
+  const [modal, setModal] = useState({ type: null, data: null }); 
   const [toast, setToast] = useState({ show: false, message: '', type: '' });
 
   const notify = (message, type = 'success') => setToast({ show: true, message, type });
   const hideToast = () => setToast({ ...toast, show: false });
-  const openModal = (type, data = null) => {
-    setModal({ type, data });
-  };
 
-  const closeModal = () => {
-    setModal({ type: null, data: null });
-  };
+  const openModal = (type, data = null) => setModal({ type, data });
+  const closeModal = () => setModal({ type: null, data: null });
 
   const addPost = (post) => {
     setPosts((prev) => [...prev, post]);
@@ -39,17 +34,26 @@ export function PostProvider({ children }) {
     }
   };
 
+  // --- NEW: Drag and Drop Logic ---
+  const reorderPosts = (dragIndex, hoverIndex) => {
+    const newPosts = [...posts];
+    const [draggedItem] = newPosts.splice(dragIndex, 1);
+    newPosts.splice(hoverIndex, 0, draggedItem);
+    setPosts(newPosts);
+  };
+
   return (
     <PostContext.Provider value={{
       posts,
-      modal,       
+      modal,
       toast,
-      openModal,   
-      closeModal,  
+      openModal,
+      closeModal,
       addPost,
       deletePost,
       updatePost,
-      hideToast
+      hideToast,
+      reorderPosts 
     }}>
       {children}
     </PostContext.Provider>

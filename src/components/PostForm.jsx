@@ -8,8 +8,12 @@ function PostForm({ initialData = null }) {
   const [content, setContent] = useState('');
   const [platforms, setPlatforms] = useState([]);
   const [date, setDate] = useState('');
-  const [time, setTime] = useState('');
   const [image, setImage] = useState(null);
+
+  // --- Custom Time State ---
+  const [hour, setHour] = useState('12');
+  const [minute, setMinute] = useState('00');
+  const [ampm, setAmpm] = useState('PM');
 
   useEffect(() => {
     if (initialData) {
@@ -17,9 +21,19 @@ function PostForm({ initialData = null }) {
       setContent(initialData.content);
       setPlatforms(initialData.platforms);
       setImage(initialData.image);
+      
       const d = new Date(initialData.scheduledFor);
       setDate(d.toISOString().split('T')[0]);
-      setTime(d.toTimeString().slice(0, 5));
+      
+      let h = d.getHours();
+      const m = d.getMinutes();
+      const isPm = h >= 12;
+      h = h % 12;
+      h = h ? h : 12;
+      
+      setHour(h.toString().padStart(2, '0'));
+      setMinute(m.toString().padStart(2, '0'));
+      setAmpm(isPm ? 'PM' : 'AM');
     } else {
       resetForm();
     }
@@ -31,16 +45,69 @@ function PostForm({ initialData = null }) {
     setPlatforms([]);
     setImage(null);
     const now = new Date();
-    const nextHour = new Date(now);
-    nextHour.setHours(now.getHours() + 1);
-    nextHour.setMinutes(0);
     setDate(now.toISOString().split('T')[0]);
-    setTime(nextHour.toTimeString().slice(0, 5));
+    setHour('12');
+    setMinute('00');
+    setAmpm('PM');
+  };
+
+  // --- UPDATED: Time Handling Logic ---
+
+  // 1. Minute Button Controls (Up/Down)
+  const handleMinuteButton = (direction) => {
+    let m = parseInt(minute || '0');
+    if (direction === 'up') m = (m + 1) % 60;
+    if (direction === 'down') m = (m - 1 + 60) % 60;
+    setMinute(m.toString().padStart(2, '0'));
+  };
+
+  // 2. Typing in Minutes
+  const handleMinuteChange = (e) => {
+    const val = e.target.value;
+    // Allow digits only, max 2 chars
+    if (!/^\d{0,2}$/.test(val)) return; 
+    setMinute(val);
+  };
+
+  const handleMinuteBlur = () => {
+    let val = parseInt(minute);
+    if (isNaN(val) || val < 0) val = 0;
+    if (val > 59) val = 59;
+    setMinute(val.toString().padStart(2, '0'));
+  };
+
+  // 3. Typing in Hours
+  const handleHourChange = (e) => {
+    const val = e.target.value;
+    // Allow digits only, max 2 chars
+    if (!/^\d{0,2}$/.test(val)) return;
+    setHour(val);
+  };
+
+  const handleHourBlur = () => {
+    let val = parseInt(hour);
+    // If empty or 0, default to 12. If > 12, clamp to 12.
+    if (isNaN(val) || val === 0) val = 12;
+    if (val > 12) val = 12;
+    setHour(val.toString().padStart(2, '0'));
+  };
+
+  const toggleAmpm = () => {
+    setAmpm(prev => prev === 'AM' ? 'PM' : 'AM');
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!title.trim() || !content.trim() || platforms.length === 0) return;
+
+    // Parse hour/minute ensuring they are numbers (in case user leaves empty)
+    let h = parseInt(hour) || 12;
+    let m = parseInt(minute) || 0;
+
+    if (ampm === 'PM' && h !== 12) h += 12;
+    if (ampm === 'AM' && h === 12) h = 0;
+    
+    const dateTime = new Date(`${date}T${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:00`);
 
     const postData = {
       id: initialData ? initialData.id : Date.now().toString(),
@@ -48,7 +115,7 @@ function PostForm({ initialData = null }) {
       content,
       image,
       platforms,
-      scheduledFor: new Date(`${date}T${time}`),
+      scheduledFor: dateTime,
       created: initialData ? initialData.created : new Date(),
     };
 
@@ -73,6 +140,95 @@ function PostForm({ initialData = null }) {
     }
   };
 
+  const renderFormContent = (isEdit) => (
+    <form onSubmit={handleSubmit}>
+      <div className="form-group">
+        <label>Title</label>
+        <input type="text" className="input-field" value={title} onChange={(e) => setTitle(e.target.value)} required />
+      </div>
+
+      <div className="form-group">
+        <div className="flex-between">
+          <label className="label-no-margin">Content</label>
+          <span className={`char-count ${content.length > 280 ? 'limit-exceeded' : ''}`}>
+            {content.length} chars
+          </span>
+        </div>
+        <textarea rows="4" className="input-field" value={content} onChange={(e) => setContent(e.target.value)} required />
+      </div>
+
+      <div className="form-group">
+        <label>Image</label>
+        <div className="image-upload-container">
+          <div className={`image-preview ${image ? 'has-image' : ''}`} style={image ? {backgroundImage: `url(${image})`} : {}}></div>
+          <div className="upload-button-container">
+            <label htmlFor={isEdit ? "editImg" : "createImg"} className="upload-button">
+              <i className="fas fa-cloud-upload-alt"></i> Upload
+            </label>
+            <input type="file" id={isEdit ? "editImg" : "createImg"} accept="image/*" onChange={handleImage} hidden />
+          </div>
+        </div>
+      </div>
+
+      <div className="form-group">
+        <label>Platforms</label>
+        <div className="platform-selector">
+          {['twitter', 'facebook', 'instagram', 'linkedin'].map(p => (
+            <button key={p} type="button" className={`platform-button ${platforms.includes(p) ? 'selected' : ''}`} onClick={() => togglePlatform(p)}>
+              <i className={`fab fa-${p === 'facebook' ? 'facebook-f' : p === 'linkedin' ? 'linkedin-in' : p}`}></i> 
+              {' ' + p.charAt(0).toUpperCase() + p.slice(1)}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="form-group">
+        <label>Schedule</label>
+        <div className="date-time-container">
+          <input type="date" className="input-field" value={date} onChange={(e) => setDate(e.target.value)} required />
+          
+          {/* UPDATED TIME PICKER UI */}
+          <div className="time-picker-container">
+            <div className="time-input-group">
+                {/* Editable Hour Input */}
+                <input 
+                    type="text" 
+                    className="time-input" 
+                    value={hour} 
+                    onChange={handleHourChange} 
+                    onBlur={handleHourBlur}
+                    placeholder="12"
+                />
+                <span className="time-colon">:</span>
+                {/* Editable Minute Input */}
+                <input 
+                    type="text" 
+                    className="time-input" 
+                    value={minute} 
+                    onChange={handleMinuteChange}
+                    onBlur={handleMinuteBlur}
+                    placeholder="00"
+                />
+            </div>
+            
+            <div className="minute-controls">
+                <button type="button" className="minute-btn up" onClick={() => handleMinuteButton('up')}>▲</button>
+                <button type="button" className="minute-btn down" onClick={() => handleMinuteButton('down')}>▼</button>
+            </div>
+
+            <button type="button" className="ampm-toggle" onClick={toggleAmpm}>
+                {ampm}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <button type="submit" className="schedule-button" style={isEdit ? {backgroundColor: '#2563eb'} : {}}>
+        {isEdit ? 'Save Changes' : 'Schedule Post'}
+      </button>
+    </form>
+  );
+
   return (
     <div className={initialData ? "" : "form-container"}>
       {!initialData && (
@@ -80,83 +236,13 @@ function PostForm({ initialData = null }) {
           <h2>Create Post</h2>
           <div className="post-form">
              <h3>Create New Post</h3> 
-             <FormContent 
-               handleSubmit={handleSubmit} title={title} setTitle={setTitle}
-               content={content} setContent={setContent} image={image} 
-               handleImage={handleImage} platforms={platforms} 
-               togglePlatform={togglePlatform} date={date} setDate={setDate} 
-               time={time} setTime={setTime} isEdit={!!initialData}
-             />
+             {renderFormContent(false)}
           </div>
         </>
       )}
-
-      {initialData && (
-         <FormContent 
-           handleSubmit={handleSubmit} title={title} setTitle={setTitle}
-           content={content} setContent={setContent} image={image} 
-           handleImage={handleImage} platforms={platforms} 
-           togglePlatform={togglePlatform} date={date} setDate={setDate} 
-           time={time} setTime={setTime} isEdit={!!initialData}
-         />
-      )}
+      {initialData && renderFormContent(true)}
     </div>
   );
 }
-
-const FormContent = ({ handleSubmit, title, setTitle, content, setContent, image, handleImage, platforms, togglePlatform, date, setDate, time, setTime, isEdit }) => (
-  <form onSubmit={handleSubmit}>
-    <div className="form-group">
-      <label>Title</label>
-      <input type="text" className="input-field" value={title} onChange={(e) => setTitle(e.target.value)} required />
-    </div>
-    <div className="form-group">
-      <div style={{display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem'}}>
-        <label style={{marginBottom: 0}}>Content</label>
-        <span style={{fontSize: '0.85rem', color: content.length > 280 ? '#ef4444' : '#6b7280'}}>
-          {content.length} chars
-        </span>
-      </div>
-      <textarea rows="4" className="input-field" value={content} onChange={(e) => setContent(e.target.value)} required />
-    </div>
-
-    <div className="form-group">
-      <label>Image</label>
-      <div className="image-upload-container">
-        <div className={`image-preview ${image ? 'has-image' : ''}`} style={image ? {backgroundImage: `url(${image})`} : {}}></div>
-        <div className="upload-button-container">
-          <label htmlFor={isEdit ? "editImg" : "createImg"} className="upload-button">
-            <i className="fas fa-cloud-upload-alt"></i> Upload
-          </label>
-          <input type="file" id={isEdit ? "editImg" : "createImg"} accept="image/*" onChange={handleImage} hidden />
-        </div>
-      </div>
-    </div>
-
-    <div className="form-group">
-      <label>Platforms</label>
-      <div className="platform-selector">
-        {['twitter', 'facebook', 'instagram', 'linkedin'].map(p => (
-          <button key={p} type="button" className={`platform-button ${platforms.includes(p) ? 'selected' : ''}`} onClick={() => togglePlatform(p)}>
-            <i className={`fab fa-${p === 'facebook' ? 'facebook-f' : p === 'linkedin' ? 'linkedin-in' : p}`}></i> 
-            {' ' + p.charAt(0).toUpperCase() + p.slice(1)}
-          </button>
-        ))}
-      </div>
-    </div>
-
-    <div className="form-group">
-      <label>Schedule</label>
-      <div className="date-time-container">
-        <input type="date" className="input-field" value={date} onChange={(e) => setDate(e.target.value)} required />
-        <input type="time" className="input-field" value={time} onChange={(e) => setTime(e.target.value)} required />
-      </div>
-    </div>
-
-    <button type="submit" className="schedule-button" style={isEdit ? {backgroundColor: '#2563eb'} : {}}>
-      {isEdit ? 'Save Changes' : 'Schedule Post'}
-    </button>
-  </form>
-);
 
 export default PostForm;

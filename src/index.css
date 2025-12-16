@@ -469,3 +469,89 @@ textarea.input-field {
     border-radius: 4px;
     cursor: pointer;
 }
+/* --- Custom Time Picker --- */
+.time-picker-container {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: #fff;
+    border: 1px solid #d1d5db;
+    padding: 0.5rem;
+    border-radius: 0.375rem;
+    width: 100%;
+}
+
+.time-input-group {
+    display: flex;
+    align-items: center;
+}
+
+.time-input {
+    width: 40px;
+    border: none;
+    text-align: center;
+    font-size: 1rem;
+    font-weight: 500;
+    padding: 0;
+    outline: none;
+    background: transparent;
+}
+
+.time-colon {
+    font-weight: bold;
+    margin: 0 2px;
+}
+
+.minute-controls {
+    display: flex;
+    flex-direction: column;
+    margin-left: 4px;
+}
+
+.minute-btn {
+    background: #f3f4f6;
+    border: none;
+    cursor: pointer;
+    font-size: 0.6rem;
+    padding: 0 4px;
+    line-height: 1;
+    color: #4b5563;
+}
+
+.minute-btn:hover {
+    background: #e5e7eb;
+    color: #111827;
+}
+
+.minute-btn.up { border-radius: 3px 3px 0 0; border-bottom: 1px solid #e5e7eb; }
+.minute-btn.down { border-radius: 0 0 3px 3px; }
+
+.ampm-toggle {
+    margin-left: auto;
+    background: #e0e7ff;
+    color: #4338ca;
+    border: none;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.ampm-toggle:hover {
+    background: #c7d2fe;
+}
+
+/* --- Drag and Drop Styles --- */
+.post-card {
+    cursor: grab; /* Show grab cursor */
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.post-card.dragging {
+    opacity: 0.5;
+    background: #f9fafb;
+    border: 2px dashed #9ca3af;
+    box-shadow: none;
+}

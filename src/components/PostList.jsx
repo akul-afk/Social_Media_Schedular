@@ -1,9 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { usePosts } from '../context/PostContext';
 
 function PostList() {
-  const { posts, openModal } = usePosts();
+  const { posts, openModal, reorderPosts } = usePosts();
   const [filter, setFilter] = useState('all');
+  
+  // Dragging State
+  const [draggedItemIndex, setDraggedItemIndex] = useState(null);
 
   const formatDate = (str) => new Date(str).toLocaleDateString('en-US', { 
     year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' 
@@ -13,15 +16,26 @@ function PostList() {
     if (filter === 'all') return true;
     return post.platforms.includes(filter);
   });
+  
+  const handleDragStart = (index) => {
+    setDraggedItemIndex(index);
+  };
 
-  const sortedPosts = [...filteredPosts].sort((a, b) => new Date(a.scheduledFor) - new Date(b.scheduledFor));
+  const handleDragOver = (e) => {
+    e.preventDefault();
+  };
+
+  const handleDrop = (index) => {
+    if (draggedItemIndex === null || draggedItemIndex === index) return;
+    reorderPosts(draggedItemIndex, index);
+    setDraggedItemIndex(null);
+  };
 
   return (
     <div className="posts-container">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
         <h2>Scheduled Posts</h2>
         
-
         <select 
           value={filter} 
           onChange={(e) => setFilter(e.target.value)}
@@ -37,15 +51,26 @@ function PostList() {
 
       <div className="posts-list-container">
         <div className="posts-list">
-          {sortedPosts.length === 0 ? (
+          {filteredPosts.length === 0 ? (
              <div className="empty-posts-message" style={{ display: 'block' }}>
                 {filter === 'all' ? "No posts scheduled. Create your first post!" : `No ${filter} posts found.`}
              </div>
           ) : (
-            sortedPosts.map((post) => (
-              <div key={post.id} className="post-card">
+            filteredPosts.map((post, index) => (
+              <div 
+                key={post.id} 
+                className={`post-card ${draggedItemIndex === index ? 'dragging' : ''}`}
+                draggable
+                onDragStart={() => handleDragStart(index)}
+                onDragOver={handleDragOver}
+                onDrop={() => handleDrop(index)}
+              >
                 <div className="post-header">
-                  <div className="post-title">{post.title}</div>
+                  <div className="post-title">
+                    {/* Visual Grip Handle */}
+                    <i className="fas fa-grip-vertical" style={{color: '#d1d5db', marginRight: '8px', cursor: 'grab'}}></i>
+                    {post.title}
+                  </div>
                   <div className="post-date">{formatDate(post.scheduledFor)}</div>
                 </div>
                 <div className="post-content">{post.content}</div>
