@@ -15,4 +15,4 @@ A React-based dashboard to plan, visualize, and manage social media content acro
 3. Run `npm run dev`
 
 
-Live Project Link - [text](https://social-media-schedular.vercel.app/)
+Live Project Link - [Click](https://social-media-schedular.vercel.app/)
