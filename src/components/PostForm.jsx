@@ -1,96 +1,114 @@
 import React, { useState, useEffect } from 'react';
 
-function PostForm({ onAddPost }) {
-  // --- STATE MANAGEMENT ---
+function PostForm({ onAddPost, onUpdatePost, postToEdit, onCancelEdit }) {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
-  const [platforms, setPlatforms] = useState([]); // Array to store selected platform IDs
+  const [platforms, setPlatforms] = useState([]);
   const [date, setDate] = useState('');
   const [time, setTime] = useState('');
-  const [image, setImage] = useState(null); // Stores the Base64 image string
+  const [image, setImage] = useState(null);
 
-  // --- EXTRA FEATURE: Initial Setup (Auto-set Date/Time) ---
+  // --- EFFECT: Populate form when 'postToEdit' changes ---
   useEffect(() => {
-    const today = new Date();
-    // Format Date: YYYY-MM-DD
-    const dateStr = today.toISOString().split('T')[0];
+    if (postToEdit) {
+      setTitle(postToEdit.title);
+      setContent(postToEdit.content);
+      setPlatforms(postToEdit.platforms);
+      setImage(postToEdit.image);
+      
+      // Parse the date object back to input strings
+      const dateObj = new Date(postToEdit.scheduledFor);
+      setDate(dateObj.toISOString().split('T')[0]);
+      
+      // Time is tricky because of timezone offsets, simplified here:
+      const hours = dateObj.getHours().toString().padStart(2, '0');
+      const minutes = dateObj.getMinutes().toString().padStart(2, '0');
+      setTime(`${hours}:${minutes}`);
+    } else {
+      resetForm();
+    }
+  }, [postToEdit]);
+
+  // Initialize Default Date (Only if not editing)
+  useEffect(() => {
+    if (!postToEdit) {
+      resetForm();
+    }
+  }, []);
+
+  const resetForm = () => {
+    setTitle('');
+    setContent('');
+    setPlatforms([]);
+    setImage(null);
     
-    // Format Time: Next hour, rounded to nearest 15 mins
+    const today = new Date();
     const nextHour = new Date(today);
     nextHour.setHours(nextHour.getHours() + 1);
     nextHour.setMinutes(0);
-    const timeStr = nextHour.toTimeString().slice(0, 5); // HH:MM
-
-    setDate(dateStr);
-    setTime(timeStr);
-  }, []);
-
-  // --- HANDLERS ---
-
-  // Handle Platform Toggle
-  const togglePlatform = (platformId) => {
-    setPlatforms((prev) => {
-      if (prev.includes(platformId)) {
-        return prev.filter((p) => p !== platformId); // Remove if exists
-      } else {
-        return [...prev, platformId]; // Add if not exists
-      }
-    });
+    
+    setDate(today.toISOString().split('T')[0]);
+    setTime(nextHour.toTimeString().slice(0, 5));
   };
 
-  // Handle Image Upload
-  const handleImageChange = (e) => {
-    const file = e.target.files[0];
-    if (file && file.type.match('image.*')) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        setImage(event.target.result); // Set preview URL
-      };
-      reader.readAsDataURL(file);
-    } else {
-      alert("Please select a valid image file.");
-    }
-  };
-
-  // Handle Form Submission
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    // Basic Validation
     if (!title.trim() || !content.trim() || platforms.length === 0) {
-      alert("Please fill in all required fields and select a platform.");
-      return;
+      return; // Validation handled by browser 'required' or custom toast in parent
     }
 
-    // Create the post object
-    const newPost = {
-      id: Date.now().toString(), // Simple unique ID
+    const postData = {
+      id: postToEdit ? postToEdit.id : Date.now().toString(),
       title,
       content,
       image,
       platforms,
       scheduledFor: new Date(`${date}T${time}`),
-      created: new Date(),
+      created: postToEdit ? postToEdit.created : new Date(),
     };
 
-    console.log("New Post Created:", newPost);
+    if (postToEdit) {
+      onUpdatePost(postData);
+    } else {
+      onAddPost(postData);
+    }
     
-    // We will hook this up to the list in the next stage!
-    // if (onAddPost) onAddPost(newPost); 
-
-    alert("Post scheduled! (Check console for data)");
-    
-    // Optional: Reset form here if needed
+    resetForm();
   };
 
-  // --- EXTRA FEATURE: Get min date for validation ---
-  const getTodayDate = () => new Date().toISOString().split('T')[0];
+  const togglePlatform = (platformId) => {
+    setPlatforms((prev) => 
+      prev.includes(platformId) ? prev.filter(p => p !== platformId) : [...prev, platformId]
+    );
+  };
+
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file && file.type.match('image.*')) {
+      const reader = new FileReader();
+      reader.onload = (ev) => setImage(ev.target.result);
+      reader.readAsDataURL(file);
+    }
+  };
 
   return (
     <div className="form-container">
-      <h2>Create Post</h2>
-      <div className="post-form">
-        <h3>Create New Post</h3>
+      <h2>{postToEdit ? 'Edit Post' : 'Create Post'}</h2>
+      <div className="post-form" style={postToEdit ? {border: '2px solid #3b82f6'} : {}}>
+        
+        <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem'}}>
+          <h3>{postToEdit ? 'Update Details' : 'Create New Post'}</h3>
+          {postToEdit && (
+            <button 
+              type="button" 
+              onClick={onCancelEdit}
+              style={{background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', textDecoration: 'underline'}}
+            >
+              Cancel Edit
+            </button>
+          )}
+        </div>
 
         <form onSubmit={handleSubmit}>
           {/* Title */}
@@ -99,7 +117,6 @@ function PostForm({ onAddPost }) {
             <input
               type="text"
               id="postTitle"
-              placeholder="Enter post title"
               className="input-field"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
@@ -107,17 +124,11 @@ function PostForm({ onAddPost }) {
             />
           </div>
 
-          {/* Content with Character Count Feature */}
+          {/* Content */}
           <div className="form-group">
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <label htmlFor="postContent">Content</label>
-              <span style={{ fontSize: '0.75rem', color: content.length > 280 ? 'red' : '#6b7280' }}>
-                {content.length} chars
-              </span>
-            </div>
+            <label htmlFor="postContent">Content</label>
             <textarea
               id="postContent"
-              placeholder="What's on your mind?"
               rows="4"
               className="input-field"
               value={content}
@@ -126,83 +137,53 @@ function PostForm({ onAddPost }) {
             ></textarea>
           </div>
 
-          {/* Image Upload */}
+          {/* Image */}
           <div className="form-group">
-            <label htmlFor="postImage">Image (optional)</label>
+            <label>Image (optional)</label>
             <div className="image-upload-container">
-              {/* Conditional Rendering for Preview */}
               <div 
-                id="imagePreview" 
                 className={`image-preview ${image ? 'has-image' : ''}`}
                 style={image ? { backgroundImage: `url(${image})` } : {}}
               ></div>
-              
               <div className="upload-button-container">
                 <label htmlFor="imageUpload" className="upload-button">
-                  <i className="fas fa-cloud-upload-alt"></i> Upload Image
+                  <i className="fas fa-cloud-upload-alt"></i> {image ? 'Change Image' : 'Upload Image'}
                 </label>
-                <input
-                  type="file"
-                  id="imageUpload"
-                  accept="image/*"
-                  onChange={handleImageChange}
-                  hidden
-                />
+                <input type="file" id="imageUpload" accept="image/*" onChange={handleImageChange} hidden />
               </div>
             </div>
           </div>
 
-          {/* Platform Selector */}
+          {/* Platforms */}
           <div className="form-group">
             <label>Platforms</label>
             <div className="platform-selector">
-              {['twitter', 'facebook', 'instagram', 'linkedin'].map((platform) => (
+              {['twitter', 'facebook', 'instagram', 'linkedin'].map((p) => (
                 <button
-                  key={platform}
+                  key={p}
                   type="button"
-                  className={`platform-button ${platforms.includes(platform) ? 'selected' : ''}`}
-                  onClick={() => togglePlatform(platform)}
+                  className={`platform-button ${platforms.includes(p) ? 'selected' : ''}`}
+                  onClick={() => togglePlatform(p)}
                 >
-                  <i className={`fab fa-${platform === 'twitter' ? 'twitter' : platform === 'facebook' ? 'facebook-f' : platform === 'linkedin' ? 'linkedin-in' : platform}`}></i> 
-                  {' ' + platform.charAt(0).toUpperCase() + platform.slice(1)}
+                  <i className={`fab fa-${p === 'twitter' ? 'twitter' : p === 'facebook' ? 'facebook-f' : p === 'linkedin' ? 'linkedin-in' : p}`}></i> 
+                  {' ' + p.charAt(0).toUpperCase() + p.slice(1)}
                 </button>
               ))}
             </div>
           </div>
 
-          {/* Date and Time */}
+          {/* Date & Time */}
           <div className="form-group">
-            <label>Schedule Date & Time</label>
+            <label>Schedule</label>
             <div className="date-time-container">
-              <div className="date-input-container">
-                <label htmlFor="scheduleDate" className="input-label">Date</label>
-                <input
-                  type="date"
-                  id="scheduleDate"
-                  className="input-field"
-                  min={getTodayDate()} // Block past dates
-                  value={date}
-                  onChange={(e) => setDate(e.target.value)}
-                  required
-                />
-              </div>
-              <div className="time-input-container">
-                <label htmlFor="scheduleTime" className="input-label">Time</label>
-                <input
-                  type="time"
-                  id="scheduleTime"
-                  className="input-field"
-                  value={time}
-                  onChange={(e) => setTime(e.target.value)}
-                  required
-                />
-              </div>
+              <input type="date" className="input-field" value={date} onChange={(e) => setDate(e.target.value)} required />
+              <input type="time" className="input-field" value={time} onChange={(e) => setTime(e.target.value)} required />
             </div>
           </div>
 
           {/* Submit Button */}
-          <button type="submit" className="schedule-button">
-            Schedule Post
+          <button type="submit" className="schedule-button" style={postToEdit ? {backgroundColor: '#2563eb'} : {}}>
+            {postToEdit ? 'Update Post' : 'Schedule Post'}
           </button>
         </form>
       </div>
