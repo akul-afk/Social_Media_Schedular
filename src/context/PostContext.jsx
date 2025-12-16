@@ -6,14 +6,12 @@ const PostContext = createContext();
 export function PostProvider({ children }) {
   const [posts, setPosts] = useLocalStorage("scheduledPosts", []);
   
-  // --- New Modal State ---
-  const [modal, setModal] = useState({ type: null, data: null }); // type: 'DELETE' | 'EDIT'
+ 
+  const [modal, setModal] = useState({ type: null, data: null });
   const [toast, setToast] = useState({ show: false, message: '', type: '' });
 
   const notify = (message, type = 'success') => setToast({ show: true, message, type });
   const hideToast = () => setToast({ ...toast, show: false });
-
-  // --- Actions ---
   const openModal = (type, data = null) => {
     setModal({ type, data });
   };
@@ -29,12 +27,12 @@ export function PostProvider({ children }) {
 
   const updatePost = (updated) => {
     setPosts((prev) => prev.map((p) => (p.id === updated.id ? updated : p)));
-    closeModal(); // Close modal after edit
+    closeModal();
     notify('Post updated!');
   };
 
   const deletePost = () => {
-    if (modal.data) { // modal.data holds the ID to delete
+    if (modal.data) {
       setPosts((prev) => prev.filter((p) => p.id !== modal.data));
       closeModal();
       notify('Post deleted');
@@ -44,10 +42,10 @@ export function PostProvider({ children }) {
   return (
     <PostContext.Provider value={{
       posts,
-      modal,       // exposing modal state
+      modal,       
       toast,
-      openModal,   // exposing opener
-      closeModal,  // exposing closer
+      openModal,   
+      closeModal,  
       addPost,
       deletePost,
       updatePost,

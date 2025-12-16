@@ -1,16 +1,15 @@
-# React + Vite
+# Social Media Scheduler 📅
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A React-based dashboard to plan, visualize, and manage social media content across multiple platforms.
 
-Currently, two official plugins are available:
+## 🚀 Features
+- **Create Posts:** Write content, upload images, and select platforms (Twitter, Facebook, LinkedIn, Instagram).
+- **Schedule:** Pick specific dates and times for your posts.
+- **Manage:** Edit existing posts or delete them with a safety confirmation modal.
+- **Filter:** View your schedule by specific platform.
+- **Persist:** Data is saved automatically to your browser's Local Storage.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
-
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## 🏃‍♂️ How to Run
+1. Clone the repo
+2. Run `npm install`
+3. Run `npm run dev`

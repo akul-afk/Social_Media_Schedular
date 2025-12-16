@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { usePosts } from '../context/PostContext';
 
-// Accept an optional 'initialData' prop for Edit Mode
 function PostForm({ initialData = null }) {
   const { addPost, updatePost } = usePosts();
 
@@ -12,10 +11,8 @@ function PostForm({ initialData = null }) {
   const [time, setTime] = useState('');
   const [image, setImage] = useState(null);
 
-  // Initialize form
   useEffect(() => {
     if (initialData) {
-      // EDIT MODE: Fill with data
       setTitle(initialData.title);
       setContent(initialData.content);
       setPlatforms(initialData.platforms);
@@ -24,10 +21,9 @@ function PostForm({ initialData = null }) {
       setDate(d.toISOString().split('T')[0]);
       setTime(d.toTimeString().slice(0, 5));
     } else {
-      // CREATE MODE: Reset to defaults
       resetForm();
     }
-  }, [initialData]); // Run whenever initialData changes
+  }, [initialData]);
 
   const resetForm = () => {
     setTitle('');
@@ -57,10 +53,10 @@ function PostForm({ initialData = null }) {
     };
 
     if (initialData) {
-      updatePost(postData); // Context handles closing the modal
+      updatePost(postData);
     } else {
       addPost(postData);
-      resetForm(); // Only reset if creating
+      resetForm();
     }
   };
 
@@ -79,13 +75,11 @@ function PostForm({ initialData = null }) {
 
   return (
     <div className={initialData ? "" : "form-container"}>
-      {/* Only show these headers if NOT in a modal (Create Mode) */}
       {!initialData && (
         <>
           <h2>Create Post</h2>
           <div className="post-form">
              <h3>Create New Post</h3> 
-             {/* The form starts here below */}
              <FormContent 
                handleSubmit={handleSubmit} title={title} setTitle={setTitle}
                content={content} setContent={setContent} image={image} 
@@ -97,7 +91,6 @@ function PostForm({ initialData = null }) {
         </>
       )}
 
-      {/* If in Modal (Edit Mode), just show the form directly */}
       {initialData && (
          <FormContent 
            handleSubmit={handleSubmit} title={title} setTitle={setTitle}
@@ -111,7 +104,6 @@ function PostForm({ initialData = null }) {
   );
 }
 
-// Helper component to keep the return clean
 const FormContent = ({ handleSubmit, title, setTitle, content, setContent, image, handleImage, platforms, togglePlatform, date, setDate, time, setTime, isEdit }) => (
   <form onSubmit={handleSubmit}>
     <div className="form-group">
@@ -119,9 +111,15 @@ const FormContent = ({ handleSubmit, title, setTitle, content, setContent, image
       <input type="text" className="input-field" value={title} onChange={(e) => setTitle(e.target.value)} required />
     </div>
     <div className="form-group">
-      <label>Content</label>
+      <div style={{display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem'}}>
+        <label style={{marginBottom: 0}}>Content</label>
+        <span style={{fontSize: '0.85rem', color: content.length > 280 ? '#ef4444' : '#6b7280'}}>
+          {content.length} chars
+        </span>
+      </div>
       <textarea rows="4" className="input-field" value={content} onChange={(e) => setContent(e.target.value)} required />
     </div>
+
     <div className="form-group">
       <label>Image</label>
       <div className="image-upload-container">
@@ -134,6 +132,7 @@ const FormContent = ({ handleSubmit, title, setTitle, content, setContent, image
         </div>
       </div>
     </div>
+
     <div className="form-group">
       <label>Platforms</label>
       <div className="platform-selector">
@@ -145,6 +144,7 @@ const FormContent = ({ handleSubmit, title, setTitle, content, setContent, image
         ))}
       </div>
     </div>
+
     <div className="form-group">
       <label>Schedule</label>
       <div className="date-time-container">
@@ -152,6 +152,7 @@ const FormContent = ({ handleSubmit, title, setTitle, content, setContent, image
         <input type="time" className="input-field" value={time} onChange={(e) => setTime(e.target.value)} required />
       </div>
     </div>
+
     <button type="submit" className="schedule-button" style={isEdit ? {backgroundColor: '#2563eb'} : {}}>
       {isEdit ? 'Save Changes' : 'Schedule Post'}
     </button>

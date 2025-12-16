@@ -4,7 +4,7 @@ import { PostProvider, usePosts } from './context/PostContext';
 import Header from './components/Header';
 import PostForm from './components/PostForm';
 import PostList from './components/PostList';
-import Modal from './components/Modal'; // Import Modal
+import Modal from './components/Modal'; 
 import Toast from './components/Toast';
 import './App.css';
 
@@ -31,16 +31,14 @@ function Dashboard() {
 
       {modal.type === 'EDIT' && (
         <Modal title="Edit Post" onClose={closeModal}>
-          {/* We reuse PostForm but pass data to it! */}
           <PostForm initialData={modal.data} />
         </Modal>
       )}
 
       <div className="content-container">
-        {/* Left side: Always shows empty Create Form */}
+
         <PostForm /> 
-        
-        {/* Right side: List */}
+
         <PostList />
       </div>
     </div>

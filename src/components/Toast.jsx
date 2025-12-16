@@ -2,7 +2,6 @@ import React, { useEffect } from 'react';
 
 function Toast({ message, type, onClose }) {
   
-  // Auto-hide the toast after 3 seconds
   useEffect(() => {
     const timer = setTimeout(() => {
       onClose();
