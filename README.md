@@ -13,3 +13,6 @@ A React-based dashboard to plan, visualize, and manage social media content acro
 1. Clone the repo
 2. Run `npm install`
 3. Run `npm run dev`
+
+
+Live Project Link - [text](https://social-media-schedular.vercel.app/)
