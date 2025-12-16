@@ -1,19 +1,14 @@
-import React, { createContext, useState, useEffect, useContext } from 'react';
+import React, { createContext, useState, useContext } from 'react';
+import useLocalStorage from '../hooks/useLocalStorage';
 
 const PostContext = createContext();
 
 export function PostProvider({ children }) {
-  const [posts, setPosts] = useState(() => {
-    const saved = localStorage.getItem("scheduledPosts");
-    return saved ? JSON.parse(saved) : [];
-  });
+  // Uses our new custom hook - logic handles itself!
+  const [posts, setPosts] = useLocalStorage("scheduledPosts", []);
   
-  const [currentPost, setCurrentPost] = useState(null); // Post currently being edited
+  const [currentPost, setCurrentPost] = useState(null);
   const [toast, setToast] = useState({ show: false, message: '', type: '' });
-
-  useEffect(() => {
-    localStorage.setItem("scheduledPosts", JSON.stringify(posts));
-  }, [posts]);
 
   // Actions
   const notify = (message, type = 'success') => {
@@ -66,5 +61,4 @@ export function PostProvider({ children }) {
   );
 }
 
-// Custom hook for easy access
 export const usePosts = () => useContext(PostContext);
