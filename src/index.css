@@ -4,11 +4,12 @@
     box-sizing: border-box;
     font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
 }
-
 body {
     background-color: #f9fafb;
     color: #1f2937;
     line-height: 1.5;
+    height: 100vh;
+    overflow: hidden;
 }
 
 .min-h-screen {
@@ -19,8 +20,9 @@ body {
 /* Header Styles */
 .header {
     text-align: center;
-    margin-bottom: 2.5rem;
+    margin-bottom: 1rem;
     animation: fadeIn 0.8s ease-out;
+    flex-shrink: 0;
 }
 
 .header h1 {
