@@ -74,7 +74,7 @@ function PostList() {
                   <div className="post-date">{formatDate(post.scheduledFor)}</div>
                 </div>
                 <div className="post-content">{post.content}</div>
-                {post.image && <div className="post-image" style={{ backgroundImage: `url(${post.image})` }}></div>}
+                {post.image && <img src={post.image} alt="Post content" className="post-image" />}
                 <div className="post-platforms">
                   {post.platforms.map(p => (
                     <span key={p} className="platform-tag">
