@@ -20,7 +20,7 @@ body {
 /* Header Styles */
 .header {
     text-align: center;
-    margin-bottom: 1rem;
+    margin-bottom: 0.5rem;
     animation: fadeIn 0.8s ease-out;
     flex-shrink: 0;
 }
@@ -28,7 +28,7 @@ body {
 .header h1 {
     color: #1a56db;
     font-size: 2rem;
-    margin-bottom: 0.5rem;
+    
 }
 
 .header p {
@@ -582,4 +582,52 @@ textarea.input-field {
     background: #f9fafb;
     border: 2px dashed #9ca3af;
     box-shadow: none;
+}@media screen and (max-width: 1536px) {
+    html {
+        font-size: 14px;
+    }
+
+    .min-h-screen {
+        padding: 0.5rem;
+    }
+
+    .header {
+        margin-bottom: 0.5rem;
+    }
+
+    .header h1 {
+        font-size: 1.5rem;
+        margin-bottom: 0.25rem;
+    }
+
+    .content-container {
+        gap: 0.75rem;
+        max-width: 98%;
+    }
+
+    .post-form,
+    .posts-list-container {
+        padding: 1rem;
+        max-height: calc(100vh - 100px);
+    }
+
+    .form-group {
+        margin-bottom: 0.75rem;
+    }
+
+    .input-field {
+        padding: 0.5rem 0.75rem;
+    }
+
+    .image-preview {
+        min-height: 100px;
+    }
+
+    .post-card {
+        padding: 0.75rem;
+    }
+
+    .post-image {
+        height: 100px;
+    }
 }
