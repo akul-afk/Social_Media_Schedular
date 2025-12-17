@@ -35,11 +35,19 @@ body {
 
 /* Content Container */
 .content-container {
-    max-width: 1200px;
+    max-width: 96%;  
     margin: 0 auto;
     display: grid;
     grid-template-columns: 1fr;
     gap: 1.5rem;
+}
+
+@media (min-width: 1024px) {
+    .content-container {
+        
+        grid-template-columns: 450px 1fr; 
+        align-items: start;
+    }
 }
 
 /* Form Container */
@@ -60,18 +68,34 @@ body {
 }
 
 .post-form,
+/* Post List Container*/
 .posts-list-container {
     background-color: white;
     border-radius: 0.5rem;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
     border: 1px solid #e5e7eb;
     padding: 1.5rem;
+  
+    height: calc(100vh - 150px); 
+    overflow-y: auto;            
+    position: sticky;            
+    top: 20px;
 }
 
-.post-form h3 {
-    font-size: 1.125rem;
-    font-weight: 500;
-    margin-bottom: 1.5rem;
+
+.posts-list-container::-webkit-scrollbar {
+    width: 8px;
+}
+.posts-list-container::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+.posts-list-container::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 4px;
+}
+.posts-list-container::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
 }
 
 /* Form Elements */
