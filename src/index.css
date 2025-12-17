@@ -4,13 +4,26 @@
     box-sizing: border-box;
     font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
 }
+html {
+    font-size: 14px; 
+}
+
 body {
     background-color: #f9fafb;
     color: #1f2937;
     line-height: 1.5;
     height: 100vh;
     overflow: hidden;
+    zoom: 90%; 
+    
+    /* Firefox Support (since it doesn't support 'zoom') */
+    -moz-transform: scale(0.9);
+    -moz-transform-origin: 0 0;
+    width: 100%;
+    flow: hidden;
 }
+
+
 
 .min-h-screen {
     min-height: 100vh;
@@ -49,7 +62,7 @@ body {
 @media (min-width: 1024px) {
     .content-container {
         
-        grid-template-columns: 450px 1fr; 
+        grid-template-columns: 380px 1fr; 
         align-items: start;
     }
 }
